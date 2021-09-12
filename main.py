@@ -6,6 +6,26 @@ from dateutil.relativedelta import relativedelta
 from requests.auth import HTTPBasicAuth
 
 
+# setup
+
+# array of server data dicts
+SERVERS = [{'server_name': '',
+            'user': '',
+            'password': ''
+            },
+           {'server_name': '',
+            'user': '',
+            'password': ''
+            },
+           ]
+
+# number of months to collect. 0 - only current month
+NUMBER_OF_MONTHS = 0
+
+# time window in days for api call
+DAYS_STEP = 1
+
+
 class QuickResto():
 
     def __init__(self, servers_data: list,
@@ -96,27 +116,6 @@ class QuickResto():
         self.df = pd.DataFrame([])
         self.get_servers_parts()
         return self.df
-
-
-SERVERS = [{'server_name': '',
-            'user': '',
-            'password': ''
-            },
-           {'server_name': '',
-            'user': '',
-            'password': ''
-            }
-           ]
-
-NUMBER_OF_MONTHS = 0
-DAYS_STEP = 1
-
-# qr_modules = [{'module_name': 'front.orders',
-#             'module_date_field': 'createDate'
-#             },
-#             {'module_name': 'warehouse.documents.incoming',
-#             'module_date_field': 'invoiceDate'
-#             }]
 
 
 if __name__ == '__main__':
