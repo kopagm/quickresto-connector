@@ -137,7 +137,7 @@ class QuickResto():
             df['place'] = df['createTerminalSalePlace'].apply(
                 lambda x: x.get('title'))
 
-            df = df.groupby(['createDate', 'place']).totalCashWithChange.agg(
+            df = df.groupby(['createDate', 'place'])['frontTotalPrice'].agg(
                 ['sum', 'mean', 'count']).reset_index()
 
         self.df = df
@@ -170,7 +170,7 @@ if __name__ == '__main__':
         'module_name': 'front.orders',
         'module_date_field': 'createDate',
         'module_fields': ['createDate', 'createTerminalSalePlace',
-                          'returned', 'totalCashWithChange']
+                          'returned', 'frontTotalPrice']
     }
 
     df_front_orders = QuickResto(servers_data=SERVERS,
@@ -179,4 +179,4 @@ if __name__ == '__main__':
                                  #  module_date_field=module_date_field,
                                  nubmer_of_months=NUMBER_OF_MONTHS,
                                  days_time_step=DAYS_STEP).get_data()
-    # df_front_orders
+    df_front_orders
