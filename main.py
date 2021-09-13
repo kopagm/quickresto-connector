@@ -19,7 +19,6 @@ from dateutil.relativedelta import relativedelta
 #             },
 #            ]
 
-
 # number of months to collect. 0 - only current month
 NUMBER_OF_MONTHS = 0
 
@@ -134,7 +133,7 @@ class QuickResto():
         if self.module_name == self.MODULE_NAME_FRONT_ORDERS:
             df = df[df['returned'] == False]
             df['createDate'] = pd.to_datetime(
-                df_front_orders['createDate']).dt.date
+                df['createDate']).dt.date
             df['place'] = df['createTerminalSalePlace'].apply(
                 lambda x: x.get('title'))
 
@@ -180,4 +179,4 @@ if __name__ == '__main__':
                                  #  module_date_field=module_date_field,
                                  nubmer_of_months=NUMBER_OF_MONTHS,
                                  days_time_step=DAYS_STEP).get_data()
-    df_front_orders
+    # df_front_orders
