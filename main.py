@@ -22,7 +22,7 @@ from dateutil.relativedelta import relativedelta
 NUMBER_OF_MONTHS = 0
 
 # time window in days for api call
-DAYS_STEP = 5
+DAYS_STEP = 1
 
 
 class QuickRestoData():
