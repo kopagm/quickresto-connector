@@ -1,1 +1,1 @@
-# QuickResto coonector
+# QuickResto connector
