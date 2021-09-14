@@ -3,10 +3,9 @@ from datetime import date, datetime, time, timedelta
 import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
-# from requests.auth import HTTPBasicAuth
 
 
-# setup
+# Setup
 
 # array of server data dicts
 # SERVERS = [{'server_name': '',
@@ -26,7 +25,7 @@ NUMBER_OF_MONTHS = 0
 DAYS_STEP = 5
 
 
-class QuickResto():
+class QuickRestoData():
 
     MODULE_NAME_FRONT_ORDERS = 'front.orders'
 
@@ -60,8 +59,7 @@ class QuickResto():
                       relativedelta(months=nubmer_of_months))
         self.start_date = convert_to_javatime(start_date)
 
-        next_date = end_date + relativedelta(days=days_time_step)
-        self.time_step = convert_to_javatime(next_date) - self.end_date
+        self.time_step = days_time_step * 60 * 60 * 24 * 1000
 
     def get_df_batch(self, server_data: dict,
                      filter: dict = {}) -> pd.DataFrame:
@@ -78,7 +76,6 @@ class QuickResto():
                                     auth=requests.auth.HTTPBasicAuth(user,
                                                                      password))
         json_response = response.json()
-        # print(json_response)
         df = pd.DataFrame.from_dict(json_response)
         return df
 
@@ -128,44 +125,15 @@ class QuickResto():
             df['server_name'] = server_name
             self.df = self.df.append(df, ignore_index=True)
 
-    def proc_data(self):
-        df = self.df
-        if self.module_name == self.MODULE_NAME_FRONT_ORDERS:
-            df = df[df['returned'] == False]
-            df['createDate'] = pd.to_datetime(
-                df['createDate']).dt.date
-            df['place'] = df['createTerminalSalePlace'].apply(
-                lambda x: x.get('title'))
-
-            df = df.groupby(['createDate', 'place'])['frontTotalPrice'].agg(
-                ['sum', 'mean', 'count']).reset_index()
-
-        self.df = df
-
     def get_data(self) -> pd.DataFrame:
         """ Collect and return DataFrame """
         self.df = pd.DataFrame([])
         self.get_servers_parts()
-        self.proc_data()
         return self.df
 
 
-if __name__ == '__main__':
+class OrderReport():
 
-    # warehouse.documents.incoming
-    # module_name = 'warehouse.documents.incoming'
-    # module_date_field = 'invoiceDate'
-
-    # df_docs_incoming = QuickResto(servers_data=SERVERS,
-    #                               module_name=module_name,
-    #                               module_date_field=module_date_field,
-    #                               nubmer_of_months=NUMBER_OF_MONTHS,
-    #                               days_time_step=DAYS_STEP).get_data()
-
-    # front.orders
-    module_name = 'front.orders'
-    module_date_field = 'createDate'
-    module_fields = []
     module_settings = {
         'module_name': 'front.orders',
         'module_date_field': 'createDate',
@@ -173,10 +141,49 @@ if __name__ == '__main__':
                           'returned', 'frontTotalPrice']
     }
 
-    df_front_orders = QuickResto(servers_data=SERVERS,
-                                 module_settings=module_settings,
-                                 #  module_name=module_name,
-                                 #  module_date_field=module_date_field,
+    def __init__(self, servers_data: list,
+                 nubmer_of_months: int,
+                 days_time_step: int):
+
+        self.servers_data = servers_data
+        self.nubmer_of_months = nubmer_of_months
+        self.days_time_step = days_time_step
+        self.df = pd.DataFrame([])
+
+    def load_data(self):
+
+        self.df = QuickRestoData(servers_data=self.servers_data,
+                                 module_settings=self.module_settings,
                                  nubmer_of_months=NUMBER_OF_MONTHS,
                                  days_time_step=DAYS_STEP).get_data()
+
+    def proc_data(self):
+        df = self.df.copy()
+        df = df[df['returned'] == False]
+        df['createDate'] = pd.to_datetime(
+            df['createDate']).dt.date
+        df['place'] = df['createTerminalSalePlace'].apply(
+            lambda x: x.get('title'))
+
+        df = df.groupby(['place', 'createDate'])['frontTotalPrice'].agg(
+            ['sum', 'mean', 'count']).reset_index()
+        df = df.rename(columns={'place': 'Место реализации',
+                           'createDate': 'Дата продажи',
+                           'sum': 'Выручка',
+                           'count': 'Кол-во чеков',
+                           'mean': 'Средний чек'
+                           })
+        self.df = df
+
+    def get_report(self):
+        self.load_data()
+        self.proc_data()
+        return self.df
+
+
+if __name__ == '__main__':
+
+    df_front_orders = OrderReport(servers_data=SERVERS,
+                                nubmer_of_months=NUMBER_OF_MONTHS,
+                                days_time_step=DAYS_STEP).get_report()
     df_front_orders
