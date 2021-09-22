@@ -250,7 +250,8 @@ class OrderReport():
         'module_name': 'front.orders',
         'module_date_field': 'createDate',
         'module_fields': ['createDate', 'createTerminalSalePlace',
-                          'returned', 'frontTotalPrice'],
+                          'returned', 'frontTotalPrice',
+                          'id', 'serverRegisterTime'],
         'sale_place_field': 'createTerminalSalePlaceDocId'
     }
 
@@ -282,22 +283,23 @@ class OrderReport():
         print('=>', path)
 
     def proc_data(self):
-        df = self.df_input.copy()
-        df = df[df['returned'] == False]
-        df['createDate'] = pd.to_datetime(
-            df['createDate']).dt.date
-        df['place'] = df['createTerminalSalePlace'].apply(
-            lambda x: x.get('title'))
+        if len(self.df_input) > 0:
+            df = self.df_input.copy()
+            df = df[df['returned'] == False]
+            df['createDate'] = pd.to_datetime(
+                df['createDate']).dt.date
+            df['place'] = df['createTerminalSalePlace'].apply(
+                lambda x: x.get('title'))
 
-        df = df.groupby(['place', 'createDate'])['frontTotalPrice'].agg(
-            ['sum', 'mean', 'count']).reset_index()
-        df = df.rename(columns={'place': 'Место реализации',
-                                'createDate': 'Дата продажи',
-                                'sum': 'Выручка',
-                                'count': 'Кол-во чеков',
-                                'mean': 'Средний чек'
-                                })
-        self.df = df
+            df = df.groupby(['place', 'createDate'])['frontTotalPrice'].agg(
+                ['sum', 'mean', 'count']).reset_index()
+            df = df.rename(columns={'place': 'Место реализации',
+                                    'createDate': 'Дата продажи',
+                                    'sum': 'Выручка',
+                                    'count': 'Кол-во чеков',
+                                    'mean': 'Средний чек'
+                                    })
+            self.df = df
 
     def get_report(self):
         self.load_data()
@@ -305,7 +307,8 @@ class OrderReport():
         return self.df
 
     def write_xlsx_data(self):
-        self.load_data()
+        # self.load_data()
+        display(self.df_input)
         self.write_xlsx(self.df_input)
 
 
@@ -332,13 +335,13 @@ class OrderOneDaySalePlaceReport(OrderReport):
     def load_data(self):
 
         sale_place_id = self.get_sale_place_id()
-        print(f'sp {self.sale_place} {sale_place_id}')
+        # print(f'sp {self.sale_place} {sale_place_id}')
         qr = QuickRestoOrderOneDaySalePlaceData(servers_data=self.servers_data,
-                                       module_settings=self.module_settings,
-                                       nubmer_of_months=self.nubmer_of_months,
-                                       days_time_step=self.days_time_step,
-                                       one_day_date=self.one_day_date,
-                                       sale_place_id=sale_place_id)
+                                                module_settings=self.module_settings,
+                                                nubmer_of_months=self.nubmer_of_months,
+                                                days_time_step=self.days_time_step,
+                                                one_day_date=self.one_day_date,
+                                                sale_place_id=sale_place_id)
 
         self.df_input = qr.get_data()
 
