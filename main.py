@@ -159,22 +159,6 @@ class QuickRestoOrderData(QuickRestoData):
         return df
 
 
-# class QuickRestoDataOrderSalePlace(QuickRestoData):
-
-#     def get_filter(self, field, since, till):
-#         sale_place_field = 'createTerminalSalePlaceDocId'
-#         sale_place = 'Место реализации 1'
-#         filter = {"filters":
-#                   [{"field": field,
-#                       "operation": "range",
-#                       "value": {"since": since, "till": till}},
-#                    {"field": sale_place_field,
-#                       "operation": "eq",
-#                       "value": sale_place}
-#                    ]}
-#         return filter
-
-
 class QuickRestoOrderOneDayData(QuickRestoOrderData):
 
     def init_dates(self):
@@ -184,20 +168,6 @@ class QuickRestoOrderOneDayData(QuickRestoOrderData):
 
         start_date = date(year, month, day)
         self.start_date = self.convert_to_javatime(start_date)
-
-    # def get_filter(self):
-    #     if self.sale_place_id == '' or self.sale_place_field == '':
-    #         filter = super().get_filter()
-    #     else:
-    #         filter = {"filters":
-    #                   [{"field": self.module_date_field,
-    #                     "operation": "range",
-    #                     "value": {"since": self.since, "till": self.till}},
-    #                    {"field": self.sale_place_field,
-    #                       "operation": "eq",
-    #                       "value": self.sale_place_id}
-    #                    ]}
-    #     return filter
 
 
 class QuickRestoOrderOneSalePlaceData(QuickRestoOrderData):
@@ -221,28 +191,6 @@ class QuickRestoOrderOneDaySalePlaceData(QuickRestoOrderOneSalePlaceData,
                                          QuickRestoOrderOneDayData):
     pass
 
-    # class QuickRestoOrderOneDayData(QuickRestoOrderData):
-
-    #     def init_dates(self):
-    #         year, month, day = self.one_day_date
-    #         end_date = date(year, month, day+1)
-    #         self.end_date = self.convert_to_javatime(end_date)
-
-    #         start_date = date(year, month, day)
-    #         self.start_date = self.convert_to_javatime(start_date)
-
-    # class QuickRestoDataSalePlace(QuickRestoData):
-
-    #     def get_servers_parts(self):
-    #         for server_data in self.servers_data:
-    #             server_name = server_data.get('server_name')
-    #             df = self.get_df_batch(server_data)
-    #             # drop columns
-    #             df = self.filter_df_colummns(df)
-
-    #             df['server_name'] = server_name
-    #             self.df = self.df.append(df, ignore_index=True)
-
 
 class OrderReport():
 
@@ -251,7 +199,7 @@ class OrderReport():
         'module_date_field': 'createDate',
         'module_fields': ['createDate', 'createTerminalSalePlace',
                           'returned', 'frontTotalPrice',
-                          'id', 'serverRegisterTime'],
+                          'id', 'payments'],
         'sale_place_field': 'createTerminalSalePlaceDocId'
     }
 
@@ -283,6 +231,18 @@ class OrderReport():
         print('=>', path)
 
     def proc_data(self):
+        """Data preprocessing"""
+
+        def prepayment_sum(payments_list: list) -> float:
+            """Sum of prepayment in order payment data"""
+            prepayment_sum = 0
+            for item in payments_list:
+                name = item.get('name', '')
+                amount = item.get('amount', 0)
+                if name.startswith('Предоплата'):
+                    prepayment_sum += amount
+            return prepayment_sum
+
         if len(self.df_input) > 0:
             df = self.df_input.copy()
             df = df[df['returned'] == False]
@@ -290,6 +250,8 @@ class OrderReport():
                 df['createDate']).dt.date
             df['place'] = df['createTerminalSalePlace'].apply(
                 lambda x: x.get('title'))
+            df['prepayment'] = df['payments'].apply(prepayment_sum)
+            df['frontTotalPrice'] = df['frontTotalPrice'] - df['prepayment']
 
             df = df.groupby(['place', 'createDate'])['frontTotalPrice'].agg(
                 ['sum', 'mean', 'count']).reset_index()
@@ -346,25 +308,6 @@ class OrderOneDaySalePlaceReport(OrderReport):
         self.df_input = qr.get_data()
 
 
-# class OrderOneDayReport_(OrderReport):
-
-#     def __init__(self, servers_data: list,
-#                  nubmer_of_months: int,
-#                  days_time_step: int):
-
-#         self.servers_data = servers_data
-#         self.nubmer_of_months = nubmer_of_months
-#         self.days_time_step = days_time_step
-#         self.df = pd.DataFrame([])
-
-#     def load_data(self):
-
-#         self.df_input = QuickRestoOrderOneSalePlaceData(servers_data=self.servers_data,
-#                                                         module_settings=self.module_settings,
-#                                                         nubmer_of_months=self.nubmer_of_months,
-#                                                         days_time_step=self.days_time_step).get_data()
-
-
 class SalePlaceReport(OrderReport):
 
     module_settings = {
@@ -388,9 +331,6 @@ class SalePlaceReport(OrderReport):
 
     def proc_data(self):
         self.df = self.df_input
-
-
-# class OrderReport(OrderReport):
 
 
 if __name__ == '__main__':
