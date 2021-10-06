@@ -233,6 +233,16 @@ class OrderReport():
     def proc_data(self):
         """Data preprocessing"""
 
+        def fiscal_sum(payments_list: list) -> float:
+            """Sum of order fiscal operations"""
+            fiscal_sum = 0
+            for item in payments_list:
+                operationType = item.get('operationType', '')
+                amount = item.get('amount', 0)
+                if operationType == 'fiscal':
+                    fiscal_sum += amount
+            return fiscal_sum
+
         def prepayment_sum(payments_list: list) -> float:
             """Sum of prepayment in order payment data"""
             prepayment_sum = 0
@@ -250,8 +260,11 @@ class OrderReport():
                 df['createDate']).dt.date
             df['place'] = df['createTerminalSalePlace'].apply(
                 lambda x: x.get('title'))
-            df['prepayment'] = df['payments'].apply(prepayment_sum)
-            df['frontTotalPrice'] = df['frontTotalPrice'] - df['prepayment']
+                
+            # df['prepayment'] = df['payments'].apply(prepayment_sum)
+            # df['frontTotalPrice'] = df['frontTotalPrice'] - df['prepayment']
+
+            df['frontTotalPrice'] = df['payments'].apply(fiscal_sum)
 
             df = df.groupby(['place', 'createDate'])['frontTotalPrice'].agg(
                 ['sum', 'mean', 'count']).reset_index()
