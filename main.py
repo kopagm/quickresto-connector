@@ -26,7 +26,7 @@ NUMBER_OF_MONTHS = 0
 DAYS_STEP = 1
 
 
-class QuickRestoData():
+class QRData():
 
     def __init__(self, servers_data: list, module_settings: dict):
 
@@ -91,7 +91,7 @@ class QuickRestoData():
         return self.df
 
 
-class QuickRestoOrderData(QuickRestoData):
+class QROrderData(QRData):
 
     def __init__(self, servers_data: list,
                  module_settings: dict,
@@ -159,7 +159,7 @@ class QuickRestoOrderData(QuickRestoData):
         return df
 
 
-class QuickRestoOrderOneDayData(QuickRestoOrderData):
+class QROrderOneDayData(QROrderData):
 
     def init_dates(self):
         year, month, day = self.one_day_date
@@ -170,7 +170,7 @@ class QuickRestoOrderOneDayData(QuickRestoOrderData):
         self.start_date = self.convert_to_javatime(start_date)
 
 
-class QuickRestoOrderOneSalePlaceData(QuickRestoOrderData):
+class QROrderOneSalePlaceData(QROrderData):
 
     def get_filter(self):
         if self.sale_place_id == '' or self.sale_place_field == '':
@@ -187,8 +187,8 @@ class QuickRestoOrderOneSalePlaceData(QuickRestoOrderData):
         return filter
 
 
-class QuickRestoOrderOneDaySalePlaceData(QuickRestoOrderOneSalePlaceData,
-                                         QuickRestoOrderOneDayData):
+class QROrderOneDaySalePlaceData(QROrderOneSalePlaceData,
+                                 QROrderOneDayData):
     pass
 
 
@@ -218,10 +218,10 @@ class OrderReport():
 
     def load_data(self):
 
-        qr = QuickRestoOrderData(servers_data=self.servers_data,
-                                 module_settings=self.module_settings,
-                                 nubmer_of_months=self.nubmer_of_months,
-                                 days_time_step=self.days_time_step)
+        qr = QROrderData(servers_data=self.servers_data,
+                         module_settings=self.module_settings,
+                         nubmer_of_months=self.nubmer_of_months,
+                         days_time_step=self.days_time_step)
         self.df_input = qr.get_data()
 
     def write_xlsx(self, df: pd.DataFrame, path: str = 'out.xlsx'):
@@ -260,14 +260,15 @@ class OrderReport():
                 df['createDate']).dt.date
             df['place'] = df['createTerminalSalePlace'].apply(
                 lambda x: x.get('title'))
-                
+
             # df['prepayment'] = df['payments'].apply(prepayment_sum)
             # df['frontTotalPrice'] = df['frontTotalPrice'] - df['prepayment']
 
             df['frontTotalPrice'] = df['payments'].apply(fiscal_sum)
 
-            df = df.groupby(['place', 'createDate'])['frontTotalPrice'].agg(
-                ['sum', 'mean', 'count']).reset_index()
+            df = df.groupby(['place', 'createDate']
+                            )['frontTotalPrice'].agg(['sum', 'mean', 'count']
+                                                     ).reset_index()
             df = df.rename(columns={'place': 'Место реализации',
                                     'createDate': 'Дата продажи',
                                     'sum': 'Выручка',
@@ -291,11 +292,11 @@ class OrderOneDayReport(OrderReport):
 
     def load_data(self):
 
-        qr = QuickRestoOrderOneDayData(servers_data=self.servers_data,
-                                       module_settings=self.module_settings,
-                                       nubmer_of_months=self.nubmer_of_months,
-                                       days_time_step=self.days_time_step,
-                                       one_day_date=self.one_day_date)
+        qr = QROrderOneDayData(servers_data=self.servers_data,
+                               module_settings=self.module_settings,
+                               nubmer_of_months=self.nubmer_of_months,
+                               days_time_step=self.days_time_step,
+                               one_day_date=self.one_day_date)
 
         self.df_input = qr.get_data()
 
@@ -311,12 +312,12 @@ class OrderOneDaySalePlaceReport(OrderReport):
 
         sale_place_id = self.get_sale_place_id()
         # print(f'sp {self.sale_place} {sale_place_id}')
-        qr = QuickRestoOrderOneDaySalePlaceData(servers_data=self.servers_data,
-                                                module_settings=self.module_settings,
-                                                nubmer_of_months=self.nubmer_of_months,
-                                                days_time_step=self.days_time_step,
-                                                one_day_date=self.one_day_date,
-                                                sale_place_id=sale_place_id)
+        qr = QROrderOneDaySalePlaceData(servers_data=self.servers_data,
+                                        module_settings=self.module_settings,
+                                        nubmer_of_months=self.nubmer_of_months,
+                                        days_time_step=self.days_time_step,
+                                        one_day_date=self.one_day_date,
+                                        sale_place_id=sale_place_id)
 
         self.df_input = qr.get_data()
 
@@ -331,8 +332,8 @@ class SalePlaceReport(OrderReport):
 
     def load_data(self):
 
-        self.df_input = QuickRestoData(servers_data=self.servers_data,
-                                       module_settings=self.module_settings).get_data()
+        self.df_input = QRData(servers_data=self.servers_data,
+                               module_settings=self.module_settings).get_data()
 
     def get_dict(self):
         self.load_data()
@@ -364,7 +365,7 @@ if __name__ == '__main__':
     #                            one_day_date=one_day_date)
     # df_front_orders = report.get_report()
 
-    # df_front_orders = QuickRestoDataOneDay(servers_data=SERVERS,
+    # df_front_orders = QRDataOneDay(servers_data=SERVERS,
     #                                        nubmer_of_months=NUMBER_OF_MONTHS,
     #                                        days_time_step=DAYS_STEP,
     #                                        year=year, month=month, day=day).get_report()
