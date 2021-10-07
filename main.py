@@ -230,18 +230,20 @@ class OrderReport():
         writer.save()
         print('=>', path)
 
+
+    def fiscal_sum(self, payments_list: list) -> float:
+        """Sum of order fiscal operations"""
+        fiscal_sum = 0
+        for item in payments_list:
+            operationType = item.get('operationType', '')
+            amount = item.get('amount', 0)
+            if operationType == 'fiscal':
+                fiscal_sum += amount
+        return fiscal_sum
+
+
     def proc_data(self):
         """Data preprocessing"""
-
-        def fiscal_sum(payments_list: list) -> float:
-            """Sum of order fiscal operations"""
-            fiscal_sum = 0
-            for item in payments_list:
-                operationType = item.get('operationType', '')
-                amount = item.get('amount', 0)
-                if operationType == 'fiscal':
-                    fiscal_sum += amount
-            return fiscal_sum
 
         def prepayment_sum(payments_list: list) -> float:
             """Sum of prepayment in order payment data"""
@@ -264,7 +266,7 @@ class OrderReport():
             # df['prepayment'] = df['payments'].apply(prepayment_sum)
             # df['frontTotalPrice'] = df['frontTotalPrice'] - df['prepayment']
 
-            df['frontTotalPrice'] = df['payments'].apply(fiscal_sum)
+            df['frontTotalPrice'] = df['payments'].apply(self.fiscal_sum)
 
             df = df.groupby(['place', 'createDate']
                             )['frontTotalPrice'].agg(['sum', 'mean', 'count']
@@ -284,8 +286,12 @@ class OrderReport():
 
     def write_xlsx_data(self):
         # self.load_data()
-        display(self.df_input)
-        self.write_xlsx(self.df_input)
+        # display(self.df_input)
+        df = self.df_input.copy()
+        df['FiscalPrice'] = df['payments'].apply(self.fiscal_sum)
+        display(df)
+        # self.write_xlsx(self.df_input)
+        self.write_xlsx(df)
 
 
 class OrderOneDayReport(OrderReport):
