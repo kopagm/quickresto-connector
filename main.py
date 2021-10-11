@@ -230,7 +230,6 @@ class OrderReport():
         writer.save()
         print('=>', path)
 
-
     def fiscal_sum(self, payments_list: list) -> float:
         """Sum of order fiscal operations"""
         fiscal_sum = 0
@@ -240,7 +239,6 @@ class OrderReport():
             if operationType == 'fiscal':
                 fiscal_sum += amount
         return fiscal_sum
-
 
     def proc_data(self):
         """Data preprocessing"""
@@ -283,6 +281,9 @@ class OrderReport():
         self.load_data()
         self.proc_data()
         return self.df
+
+    def get_xlsx(self):
+        self.write_xlsx(self.df)
 
     def write_xlsx_data(self):
         # self.load_data()
@@ -327,6 +328,26 @@ class OrderOneDaySalePlaceReport(OrderReport):
 
         self.df_input = qr.get_data()
 
+
+class OrderGSpreadSReport(OrderReport):
+
+    def __init__(self, servers_data: list,
+                 nubmer_of_months: int = 0,
+                 days_time_step: int = 1,
+                 one_day_date: Tuple[int, int, int] = (2021, 9, 14),
+                 sale_place='',
+                 file_id='',
+                 sa_path=''):
+
+        super().__init__(servers_data=servers_data,
+                         nubmer_of_months=nubmer_of_months,
+                         days_time_step=days_time_step,
+                         one_day_date=one_day_date,
+                         sale_place=sale_place)
+        self.file_id = file_id
+        self.sa_path = sa_path
+    
+    
 
 class SalePlaceReport(OrderReport):
 
