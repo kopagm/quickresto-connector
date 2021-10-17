@@ -2,6 +2,8 @@ from typing import Tuple
 import pyodbc
 import pandas as pd
 
+from setup import SQL_SERVER
+
 
 class SQLConnection():
 
@@ -33,13 +35,15 @@ class SQLConnection():
 
         return cnxn
 
+
     def get_dates(self, col: str = 'Date') -> list:
         cursor = self.cnxn.cursor()
         rows = cursor.execute(f"select {col} from {self.table}").fetchall()
-        print(rows)
+        # print(rows)
         cursor.close()
         rows = list(map(lambda x: x[0], rows))
         return rows
+
 
     def drop_table(self):
         # '''Drop table'''
@@ -50,6 +54,7 @@ class SQLConnection():
         cursor.execute(qs)
         cursor.commit()
         cursor.close()
+
 
     def create_table(self):
         # '''Insert DataFrame in table'''
@@ -67,16 +72,19 @@ class SQLConnection():
         cursor.commit()
         cursor.close()
 
+
     def get_querydata_insert(self, ser: pd.Series) -> Tuple[str, Tuple]:
         '''Insert DataFrame in table'''
         cols = ser.index
         names = ', '.join(cols)
         wildcards = ', '.join(list("?"*len(cols)))
+        # "insert into t(name, id) values (?, ?)"
         qs = f'''INSERT INTO {self.table}
                 ({names})
                 values({wildcards})'''
         values = tuple(ser.values)
         return (qs, values)
+
 
     def get_querydata_update(self, ser: pd.Series) -> Tuple[str, Tuple]:
         '''Insert DataFrame in table'''
@@ -95,25 +103,16 @@ class SQLConnection():
         return (qs, values)
 
 
-    def incert_df(self, df: pd.DataFrame):
-        '''Insert DataFrame in table'''
-        cursor = self.cnxn.cursor()
-
-        for index, row in df.iterrows():
-            qs, values = self.get_querydata_insert(row)
-            cursor.execute(qs, values)
-
-        cursor.commit()
-        cursor.close()
-
     def update_df(self, df: pd.DataFrame):
         '''Update table from DataFrame'''
 
         cursor = self.cnxn.cursor()
 
         for index, row in df.iterrows():
+            # update
             qs, values = self.get_querydata_update(row)
             count = cursor.execute(qs, values).rowcount
+            # insert if not update
             if count == 0:
                 qs, values = self.get_querydata_insert(row)
                 cursor.execute(qs, values)
@@ -122,22 +121,40 @@ class SQLConnection():
         cursor.close()
 
 
+    def delete_all_rows(self):
+        '''Delete rows from table'''
+
+        cursor = self.cnxn.cursor()
+
+        qs = f'''DELETE FROM {self.table}'''
+        # "delete from users"
+        cursor.execute(qs)
+
+        cursor.commit()
+        cursor.close()
+
+
+    def delete_rows(self, field: str, start_v: str, end_v: str):
+        '''Delete rows from table'''
+
+        cursor = self.cnxn.cursor()
+
+        qs = f'''DELETE FROM {self.table}
+                WHERE {field} BETWEEN ? AND ?'''
+        values = (start_v, end_v)
+        # "delete from users where user_id=1"
+        cursor.execute(qs, values)
+
+        cursor.commit()
+        cursor.close()
+
+
 if __name__ == '__main__':
-    server = {
-        'server': 'localhost',
-        'database': 'qr',
-        'driver': 'FreeTDS',
-        'username': 'sa',
-        'password': '1234Sql!'}
-    con = SQLConnection(**server)
-    # rows = con.get_dates()
-    # print(rows)
-    df = pd.read_excel("out.xlsx", sheet_name='1')
-    # con.incert_df(df)
-    # rows = con.get_dates()
-    # print(rows)
-    # con.drop_table()
-    # con.create_table()
-    # con.incert_df(df)
-    con.update_df(df)
-    print(con.get_dates())
+    cnxn = SQLConnection(**SQL_SERVER)
+    # df = pd.read_excel("out.xlsx", sheet_name='1')
+    # cnxn.incert_df(df)
+    # cnxn.drop_table()
+    # cnxn.create_table()
+    # cnxn.update_df(df)
+    # con.delete_rows('Date', '2021-09-12', '2021-09-15')
+    print(cnxn.get_dates())
