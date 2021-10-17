@@ -26,6 +26,7 @@ class QrSql():
     def get_orders(self, reload: bool = False):
         dates = self.get_dates(reload=reload)
         for day in dates:
+            print(f'[{day}]', end=' ')
             report = OrderDayReport(servers_data=QR_SERVERS, day=day)
             df = report.get_report()
             if len(df):
@@ -35,8 +36,8 @@ class QrSql():
 if __name__ == '__main__':
 
     db = SQLConnection(**SQL_SERVER)
-    # cnxn.delete_all_rows()
-    # cnxn.create_table()
+    # db.delete_all_rows()
+    # db.create_table()
 
     qs = QrSql(db=db, n_days=N_DAYS, qr_servers=QR_SERVERS)
     qs.get_orders(reload=False)
