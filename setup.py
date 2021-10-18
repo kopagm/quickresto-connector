@@ -1,21 +1,22 @@
-QR_SERVERS = [
-    {'server_name': '',
-     'user': '',
-     'password': ''
-     },
-    # {'server_name': '',
-    #  'user': '',
-    #  'password': ''
-    #  }
+QR_SERVERS_GROUPS = [
+    # region xxx1
+    {'order_table_name': 'order_xxx',
+     'qr_servers': [
+         # server #1
+         {'server_name': '',
+          'user': '',
+          'password': ''},
+         # server #2...
+     ]},
+    # region xxx2...
 ]
 
 SQL_SERVER = {
     'server': 'localhost',
-    # 'server': '10.0.2.2',
     'database': 'qr',
-    # 'driver': 'FreeTDS',
-    'driver': 'ODBC Driver 17 for SQL Server',
+    'driver': 'FreeTDS',
+    # 'driver': 'ODBC Driver 17 for SQL Server',
     'username': '',
-    'password': '!'}
+    'password': ''}
 
-N_DAYS = 10
+N_DAYS = 4

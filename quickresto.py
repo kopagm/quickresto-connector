@@ -5,7 +5,7 @@ import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
 
-from setup import QR_SERVERS
+# from setup import QR_SERVERS
 
 # Setup
 
@@ -161,8 +161,9 @@ class OrderDayReport():
 
 
 if __name__ == '__main__':
-    one_day_date = (2021, 9, 11)
-    report = OrderDayReport(servers_data=QR_SERVERS,
-                            day=date(*one_day_date))
-    df_front_orders = report.get_report()
-    df_front_orders
+    pass
+    # one_day_date = (2021, 9, 11)
+    # report = OrderDayReport(servers_data=QR_SERVERS,
+    #                         day=date(*one_day_date))
+    # df_front_orders = report.get_report()
+    # df_front_orders
