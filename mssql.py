@@ -15,8 +15,7 @@ class SQLConnection():
         self.username = username
         self.password = password
 
-        # self.table = 'orderinfo'
-        self.key_fields = ['Place', 'Date']
+        self.key_fields = ['Place', 'Date', 'ServerName']
 
         self.cnxn = self.get_connection()
 
@@ -28,11 +27,7 @@ class SQLConnection():
             # tds_version='7.4',
             password=self.password,
             port=1433,
-            driver=self.driver
-        )
-        # cnxn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=' +
-        #                       server+';DATABASE='+database+';UID='+username+';PWD=' + password)
-
+            driver=self.driver)
         return cnxn
 
     def get_dates(self, table: str, col: str = 'Date') -> list:
@@ -43,11 +38,20 @@ class SQLConnection():
         rows = list(map(lambda x: x[0], rows))
         return rows
 
+    def get_server_dates(self, table: str, server_name: str) -> list:
+        cursor = self.cnxn.cursor()
+        qs = f"select Date from {table} WHERE ServerName = '{server_name}'"
+        rows = cursor.execute(qs).fetchall()
+        # print(rows)
+        cursor.close()
+        rows = list(map(lambda x: x[0], rows))
+        return rows
+
     def drop_table(self, table: str):
         # '''Drop table'''
         cursor = self.cnxn.cursor()
 
-        qs = f'''IF OBJECT_ID('dbo.{table}', 'U') IS NOT NULL
+        qs = f'''IF OBJECT_ID('{table}', 'U') IS NOT NULL
                     DROP TABLE {table}'''
         cursor.execute(qs)
         cursor.commit()
@@ -64,7 +68,8 @@ class SQLConnection():
                         Revenue [money] NOT NULL,
                         NumberOfOrders [int] NOT NULL,
                         AverageOrder [float] NOT NULL,
-                        primary key (Place, Date));'''
+                        ServerName [NVARCHAR](50) NOT NULL,
+                        primary key (Place, Date, ServerName));'''
 
         cursor.execute(qs)
         cursor.commit()
@@ -96,7 +101,6 @@ class SQLConnection():
         qs = f'''UPDATE {table}
                     SET {set_str}
                     WHERE {where_str}'''
-        # print(qs)
         values = tuple(ser[update_col]) + tuple(ser[self.key_fields])
         return (qs, values)
 

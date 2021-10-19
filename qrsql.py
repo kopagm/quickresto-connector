@@ -7,42 +7,46 @@ from setup import N_DAYS, QR_SERVERS_GROUPS, SQL_SERVER
 
 class QrSql():
 
-    def __init__(self,
-                 db: SQLConnection,
-                 n_days: int,
-                 qr_servers: list,
-                 order_table_name: str):
-        self.n_days = n_days
+    def __init__(self, db: SQLConnection):
         self.db = db
-        self.qr_servers = qr_servers
-        self.order_table_name = order_table_name
 
-    def get_dates(self, reload: bool = False):
+    def get_dates(self, server_name: str, n_days: int,
+                  order_table_name: str, reload: bool):
         today = date.today()
         dates = [today - timedelta(days=n)
-                 for n in range(1, self.n_days+1)]
+                 for n in range(1, n_days+1)]
         if not reload:
-            remote_dates = self.db.get_dates(table=self.order_table_name)
+            remote_dates = self.db.get_server_dates(
+                table=order_table_name,
+                server_name=server_name)
             dates = [x for x in dates if x not in remote_dates]
         return dates
 
-    def get_orders(self, reload: bool = False):
-        self.db.create_table(table=self.order_table_name)
-        dates = self.get_dates(reload=reload)
-        for day in dates:
-            print(f'[{self.order_table_name}][{day}]', end=' ')
-            report = OrderDayReport(servers_data=self.qr_servers, day=day)
-            df = report.get_report()
-            if len(df):
-                self.db.update_df(table=self.order_table_name, df=df)
+    def get_orders(self, n_days: int, qr_servers: list,
+                   order_table_name: str, reload: bool = False):
+        self.db.create_table(table=order_table_name)
+        report = OrderDayReport()
+
+        for server in qr_servers:
+            dates = self.get_dates(server_name=server['server_name'],
+                                   n_days=n_days,
+                                   order_table_name=order_table_name,
+                                   reload=reload)
+            for day in dates:
+                print(f'[{order_table_name}][{day}]', end=' ')
+                df = report.get_report(server_data=server, day=day)
+                if len(df):
+                    self.db.update_df(table=order_table_name, df=df)
 
 
 def main():
     db = SQLConnection(**SQL_SERVER)
+    qs = QrSql(db=db)
     for group in QR_SERVERS_GROUPS:
-        # db.delete_all_rows(group['order_table_name'])
-        qs = QrSql(db=db, n_days=N_DAYS, **group)
-        qs.get_orders(reload=False)
+        # db.drop_table(group['order_table_name'])
+        db.delete_all_rows(group['order_table_name'])
+        qs.get_orders(reload=False, n_days=N_DAYS, **group)
+        # qs.get_orders(reload=True, n_days=N_DAYS, **group)
 
 
 if __name__ == '__main__':
