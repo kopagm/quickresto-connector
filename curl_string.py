@@ -39,7 +39,8 @@ def main():
                             capture_output=True)
     print(f'[curl string]:\n{curl_string}\n')
     # print(f'[cur args]:\n{result.args}\n')
-    print(f'[out]:\n{result.stdout[:500]}')
+    # print(f'[out]:\n{result.stdout[:500]}')
+    print(f'[out]:\n{result.stdout[:500].decode("utf-8")}')
 
 
 if __name__ == '__main__':
