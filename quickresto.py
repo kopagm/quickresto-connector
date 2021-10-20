@@ -28,7 +28,6 @@ class QRData():
         self.server_data = server_data
         self.module_settings = module_settings
 
-
     def get_api_df(self, server_name: str, user: str, password: str,
                    module_name: str, filter: dict = {},
                    **kwargs) -> pd.DataFrame:
@@ -45,26 +44,24 @@ class QRData():
 
         return response
 
+    # def proc_response(self, response: requests.Response) -> pd.DataFrame:
+    #     display_len = 170
+    #     if len(response.text) > display_len:
+    #         end_line = '...]'
+    #     else:
+    #         end_line = ''
+    #     print(response.status_code, response.text[:display_len], end_line)
 
-    def proc_responce(self, response: requests.Response) -> pd.DataFrame:
-        display_len = 170
-        if len(response.text) > display_len:
-            end_line = '...]'
-        else:
-            end_line = ''
-        print(response.status_code, response.text[:display_len], end_line)
-
-        # if response.status_code == 200:
-        try:
-            json_response = response.json()
-            df = pd.DataFrame.from_dict(json_response)
-        except JSONDecodeError:
-            print('[JSONDecodeError]')
-            df = pd.DataFrame([])
-        # else:
-        #     df = pd.DataFrame([])
-        return df
-
+    #     # if response.status_code == 200:
+    #     try:
+    #         json_response = response.json()
+    #         df = pd.DataFrame.from_dict(json_response)
+    #     except JSONDecodeError:
+    #         print('[JSONDecodeError]')
+    #         df = pd.DataFrame([])
+    #     # else:
+    #     #     df = pd.DataFrame([])
+    #     return df
 
     def select_df_colummns(self, df_input: pd.DataFrame,
                            module_fields: list, **kwargs) -> pd.DataFrame:
@@ -73,26 +70,26 @@ class QRData():
             df = df[module_fields]
         return df
 
+    # def get_filter(self, **kwargs):
+    #     return {}
 
-    def get_filter(self, **kwargs):
-        return {}
+    # def get_data(self) -> pd.DataFrame:
+    #     """ Collect and return DataFrame """
+    #     filter = self.get_filter(**self.module_settings)
 
+    #     response = self.get_api_df(filter=filter, **self.server_data,
+    #                                **self.module_settings)
+    #     df = self.proc_response(response)
 
-    def get_data(self) -> pd.DataFrame:
-        """ Collect and return DataFrame """
-        filter = self.get_filter(**self.module_settings)
-
-        responce = self.get_api_df(filter=filter, **self.server_data,
-                                   **self.module_settings)
-        df = self.proc_responce(responce)
-
-        # drop columns
-        df = self.select_df_colummns(df, **self.module_settings)
-        df['server_name'] = self.server_data.get('server_name')
-        return df
+    #     # drop columns
+    #     df = self.select_df_colummns(df, **self.module_settings)
+    #     df['server_name'] = self.server_data.get('server_name')
+    #     return df
 
 
 class QROrderDayData(QRData):
+
+    parts = 10
 
     def __init__(self, day: date, **kwargs):
         super().__init__(**kwargs)
@@ -102,9 +99,9 @@ class QROrderDayData(QRData):
         timestamp = int((d - date(1970, 1, 1)) / timedelta(seconds=1)) * 1000
         return timestamp
 
-    def get_filter(self, module_date_field: str, **kwargs):
-        since = self.convert_to_javatime(self.day)
-        till = self.convert_to_javatime(self.day + timedelta(days=1))
+    def get_filter(self, module_date_field: str,
+                   since: int, till: int,
+                   **kwargs):
 
         filter = {"filters":
                   [{"field": module_date_field,
@@ -112,6 +109,70 @@ class QROrderDayData(QRData):
                     "value": {"since": since, "till": till}}
                    ]}
         return filter
+
+    def log_response(self, response):
+        display_len = 170
+        if len(response.text) > display_len:
+            end_line = '...]'
+        else:
+            end_line = ''
+        print(response.status_code, response.text[:display_len], end_line)
+
+    def proc_response(self, response: requests.Response) -> pd.DataFrame:
+        self.log_response(response)
+        json_response = response.json()
+        df = pd.DataFrame.from_dict(json_response)
+        return df
+
+    def get_parts_data(self, response,
+                       since: int, till: int, parts: int) -> pd.DataFrame:
+        self.log_response(response)
+        print('[retry with time parts...]')
+
+        df = pd.DataFrame([])
+        try:
+            step = (till - since) // parts
+            p_since, p_till = since, since + step
+            while p_till <= till:
+                if p_till > till:
+                    p_till = till
+                filter = self.get_filter(since=p_since, till=p_till,
+                                         **self.module_settings)
+                response = self.get_api_df(filter=filter, **self.server_data,
+                                           **self.module_settings)
+                df_part = self.proc_response(response)  # try part
+                df = df.append(df_part, ignore_index=True)
+                p_since, p_till = p_till + 1, p_till + step
+        except JSONDecodeError:
+            print('[JSONDecodeError]')
+            df = pd.DataFrame([])
+        return df
+
+    def get_data(self) -> pd.DataFrame:
+        """ Collect and return DataFrame """
+
+        since = self.convert_to_javatime(self.day)
+        till = self.convert_to_javatime(self.day + timedelta(days=1))
+
+        filter = self.get_filter(since=since, till=till,
+                                 **self.module_settings)
+        response = self.get_api_df(filter=filter, **self.server_data,
+                                   **self.module_settings)
+
+        if 500 <= response.status_code < 600:
+            df = self.get_parts_data(response, since=since,
+                                     till=till, parts=self.parts)
+        else:
+            try:
+                df = self.proc_response(response)
+            except JSONDecodeError:
+                print('[JSONDecodeError]')
+                df = pd.DataFrame([])
+
+        # drop columns
+        df = self.select_df_colummns(df, **self.module_settings)
+        df['server_name'] = self.server_data.get('server_name')
+        return df
 
 
 class OrderDayReport():
