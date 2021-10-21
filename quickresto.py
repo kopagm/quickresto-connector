@@ -4,7 +4,6 @@ from typing import Tuple
 
 import pandas as pd
 import requests
-# from dateutil.relativedelta import relativedelta
 
 # from setup import QR_SERVERS
 
@@ -44,24 +43,6 @@ class QRData():
 
         return response
 
-    # def proc_response(self, response: requests.Response) -> pd.DataFrame:
-    #     display_len = 170
-    #     if len(response.text) > display_len:
-    #         end_line = '...]'
-    #     else:
-    #         end_line = ''
-    #     print(response.status_code, response.text[:display_len], end_line)
-
-    #     # if response.status_code == 200:
-    #     try:
-    #         json_response = response.json()
-    #         df = pd.DataFrame.from_dict(json_response)
-    #     except JSONDecodeError:
-    #         print('[JSONDecodeError]')
-    #         df = pd.DataFrame([])
-    #     # else:
-    #     #     df = pd.DataFrame([])
-    #     return df
 
     def select_df_colummns(self, df_input: pd.DataFrame,
                            module_fields: list, **kwargs) -> pd.DataFrame:
@@ -69,22 +50,6 @@ class QRData():
         if (len(module_fields) > 0) & (len(df.columns) > 0):
             df = df[module_fields]
         return df
-
-    # def get_filter(self, **kwargs):
-    #     return {}
-
-    # def get_data(self) -> pd.DataFrame:
-    #     """ Collect and return DataFrame """
-    #     filter = self.get_filter(**self.module_settings)
-
-    #     response = self.get_api_df(filter=filter, **self.server_data,
-    #                                **self.module_settings)
-    #     df = self.proc_response(response)
-
-    #     # drop columns
-    #     df = self.select_df_colummns(df, **self.module_settings)
-    #     df['server_name'] = self.server_data.get('server_name')
-    #     return df
 
 
 class QROrderDayData(QRData):
@@ -116,7 +81,8 @@ class QROrderDayData(QRData):
             end_line = '...]'
         else:
             end_line = ''
-        print(response.status_code, response.text[:display_len], end_line)
+        print(response.status_code,
+              response.text.replace('\n', '')[:display_len], end_line)
 
     def proc_response(self, response: requests.Response) -> pd.DataFrame:
         self.log_response(response)
