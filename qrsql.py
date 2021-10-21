@@ -44,7 +44,7 @@ def main():
     qs = QrSql(db=db)
     for group in QR_SERVERS_GROUPS:
         # db.drop_table(group['order_table_name'])
-        db.delete_all_rows(group['order_table_name'])
+        # db.delete_all_rows(group['order_table_name'])
         qs.get_orders(reload=False, n_days=N_DAYS, **group)
         # qs.get_orders(reload=True, n_days=N_DAYS, **group)
 
