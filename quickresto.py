@@ -43,7 +43,6 @@ class QRData():
 
         return response
 
-
     def select_df_colummns(self, df_input: pd.DataFrame,
                            module_fields: list, **kwargs) -> pd.DataFrame:
         df = df_input.copy()
@@ -165,6 +164,12 @@ class OrderDayReport():
         df = qr.get_data()
         return df
 
+    def write_xlsx(self, df: pd.DataFrame, path: str = 'out.xlsx'):
+        writer = pd.ExcelWriter(path)
+        df.to_excel(writer, index=False, sheet_name='1')
+        writer.save()
+        print('=>', path)
+
     def fiscal_sum(self, payments_list: list) -> float:
         """Sum of order fiscal operations"""
         fiscal_sum = 0
@@ -201,6 +206,16 @@ class OrderDayReport():
         else:
             df = pd.DataFrame([])
         return df
+
+    def get_xlsx_data(self, server_data: dict, day: date):
+        df = self.load_data(server_data=server_data, day=day)
+        # df['localCreateDate'] = pd.to_datetime(
+            # df['localCreateDate']).dt.date
+        # df['place'] = df['createTerminalSalePlace'].apply(
+            # lambda x: x.get('title'))
+        df['totalPrice'] = df['payments'].apply(self.fiscal_sum)
+        df.drop(columns=['createTerminalSalePlace'], inplace=True)
+        self.write_xlsx(df)
 
     def get_report(self, server_data: dict, day: date):
         df_input = self.load_data(server_data=server_data, day=day)
