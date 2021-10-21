@@ -1,2 +1,1 @@
-venv\Scripts\activate & python curl_string.py
-pause
+venv\Scripts\activate & python curl_string.py > log_curl.txt

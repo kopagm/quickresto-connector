@@ -133,14 +133,21 @@ class SQLConnection():
         cursor.commit()
         cursor.close()
 
-    def delete_rows(self, table: str, field: str, start_v: str, end_v: str):
+    def delete_rows(self, table: str, eq_col1: str, eq_col2: str):
         '''Delete rows from table'''
+
+        col1 = 'Date'
+        col2 = 'ServerName'
 
         cursor = self.cnxn.cursor()
 
+        # qs = f'''DELETE FROM {table}
+        #             WHERE {col1} BETWEEN ? AND ?
+        #                 AND {col2} = ?'''
         qs = f'''DELETE FROM {table}
-                    WHERE {field} BETWEEN ? AND ?'''
-        values = (start_v, end_v)
+                    WHERE {col1} = ? AND {col2} = ?'''
+        # print(qs)
+        values = (eq_col1, eq_col2)
         # "delete from users where user_id=1"
         cursor.execute(qs, values)
 
@@ -155,5 +162,5 @@ if __name__ == '__main__':
     # cnxn.drop_table()
     # cnxn.create_table()
     # cnxn.update_df(df)
-    # con.delete_rows('Date', '2021-09-12', '2021-09-15')
+    # cnxn.delete_rows(table='order_xxx', eq_col1='2021-10-16', eq_col2='ng398')
     # print(cnxn.get_dates())

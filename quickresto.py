@@ -4,9 +4,9 @@ from typing import Tuple
 
 import pandas as pd
 import requests
-from dateutil.relativedelta import relativedelta
+# from dateutil.relativedelta import relativedelta
 
-from setup import QR_SERVERS
+# from setup import QR_SERVERS
 
 # Setup
 
@@ -244,8 +244,8 @@ class OrderDayReport():
 
 if __name__ == '__main__':
     pass
-    one_day_date = (2021, 9, 11)
-    report = OrderDayReport()
-    df_front_orders = report.get_report(server_data=QR_SERVERS[0],
-                                        day=date(*one_day_date))
-    print(df_front_orders)
+    # one_day_date = (2021, 9, 11)
+    # report = OrderDayReport()
+    # df_front_orders = report.get_report(server_data=QR_SERVERS[0],
+    #                                     day=date(*one_day_date))
+    # print(df_front_orders)
