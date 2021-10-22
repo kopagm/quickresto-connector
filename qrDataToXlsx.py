@@ -1,4 +1,5 @@
 from datetime import date
+
 from quickresto import OrderDayReport
 from setup import N_DAYS, QR_SERVERS_GROUPS, SQL_SERVER
 
@@ -12,7 +13,8 @@ def main():
                  if b['server_name'] == server_name][0]
 
     report = OrderDayReport()
-    report.get_xlsx_data(server_data=qr_server, day=day)
+    path = f'{day}-{server_name}.xlsx'
+    report.get_xlsx_data(server_data=qr_server, day=day, path=path)
 
 
 if __name__ == '__main__':

@@ -207,15 +207,16 @@ class OrderDayReport():
             df = pd.DataFrame([])
         return df
 
-    def get_xlsx_data(self, server_data: dict, day: date):
+    def get_xlsx_data(self, server_data: dict, day: date,
+                      path: str = 'out.xlsx'):
         df = self.load_data(server_data=server_data, day=day)
         # df['localCreateDate'] = pd.to_datetime(
-            # df['localCreateDate']).dt.date
+        # df['localCreateDate']).dt.date
         # df['place'] = df['createTerminalSalePlace'].apply(
-            # lambda x: x.get('title'))
+        # lambda x: x.get('title'))
         df['totalPrice'] = df['payments'].apply(self.fiscal_sum)
         df.drop(columns=['createTerminalSalePlace'], inplace=True)
-        self.write_xlsx(df)
+        self.write_xlsx(df, path=path)
 
     def get_report(self, server_data: dict, day: date):
         df_input = self.load_data(server_data=server_data, day=day)
