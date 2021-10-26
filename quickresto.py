@@ -80,8 +80,11 @@ class QROrderDayData(QRData):
             end_line = '...]'
         else:
             end_line = ''
-        print(response.status_code,
-              response.text.replace('\n', '')[:display_len], end_line)
+        res_txt = response.text.replace('\n', '')[:display_len]
+        log_str = (
+            f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}]'
+            f' {response.status_code} {res_txt}{end_line}')
+        print(log_str)
 
     def proc_response(self, response: requests.Response) -> pd.DataFrame:
         self.log_response(response)
@@ -92,7 +95,8 @@ class QROrderDayData(QRData):
     def get_parts_data(self, response,
                        since: int, till: int, parts: int) -> pd.DataFrame:
         self.log_response(response)
-        print('[retry with time parts...]')
+        print(f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}]'
+              f'[retry with {parts} parts...]')
 
         df = pd.DataFrame([])
         try:
@@ -212,8 +216,8 @@ class OrderDayReport():
         df = self.load_data(server_data=server_data, day=day)
         # df['localCreateDate'] = pd.to_datetime(
         # df['localCreateDate']).dt.date
-        # df['place'] = df['createTerminalSalePlace'].apply(
-        # lambda x: x.get('title'))
+        df['place'] = df['createTerminalSalePlace'].apply(
+            lambda x: x.get('title'))
         df['totalPrice'] = df['payments'].apply(self.fiscal_sum)
         df.drop(columns=['createTerminalSalePlace'], inplace=True)
         self.write_xlsx(df, path=path)
