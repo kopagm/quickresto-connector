@@ -1,1 +1,1 @@
-venv\Scripts\activate & python qrsql.py > log.txt
+venv\Scripts\activate & python app.py > log.txt
