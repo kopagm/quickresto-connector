@@ -6,6 +6,7 @@ import requests
 from json.decoder import JSONDecodeError
 import sys
 
+
 class QROrderData(QROrder):
 
     def __init__(self, *args, **kwargs):
@@ -20,7 +21,7 @@ class QROrderData(QROrder):
                     f"quickresto.ru/platform/online/api/list?"
                     f"moduleName={self.module_settings['module_name']}")
         self.session = self.get_session()
-        
+
     def get_session(self):
         session = requests.Session()
         session.auth = (self.server_data['user'], self.server_data['password'])
@@ -92,6 +93,11 @@ class QROrderData(QROrder):
                 if error.args[0] == 504:
                     if self.parts + self.parts_step <= self.parts_max:
                         self.parts += self.parts_step
+                    else:
+                        print(f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}] '
+                              f'[{self.server_data["server_name"]}] [{day}] '
+                              f'[Fails with {self.parts} parts]')
+                        result = pd.DataFrame([])
                 else:
                     print(f'[Error] {error.args}')
                     result = pd.DataFrame([])
