@@ -1,5 +1,5 @@
 from mssql import SQLConnection
-from my_setup import QR_SERVERS_GROUPS, SQL_SERVER
+from my_setup import QR_SERVERS_GROUPS, SQL_SERVER, N_DAYS
 from orch.orch_tread import OrchTread
 from worker.order import Order
 from worker.order_aggregate import OrderAggregate
@@ -8,14 +8,18 @@ from worker.servers_tasks import ServersTasks
 from worker.show_config import ShowConfig
 from worker.show_servers_tasks import ShowServersTasks
 
-n_days = 5
+n_days = N_DAYS
+# n_days = 5
 
+db_conf = {"connection": SQLConnection,
+           "sql_server": SQL_SERVER}
 db = SQLConnection(**SQL_SERVER)
 
 config = {'servers_groups': QR_SERVERS_GROUPS,
           'n_days': n_days,
           'reload': False,
-          'db': db
+          'db': db,
+          'db_conf': db_conf
           }
 
 max_workers = 10
