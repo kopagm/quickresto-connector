@@ -14,6 +14,7 @@ class QROrderData(QROrder):
         self.parts = 10
         self.parts_max = 120
         self.parts_step = 30
+        self.retry_limit = 5
         # self.auth = requests.auth.HTTPBasicAuth(
         #     self.server_data['user'], self.server_data['password'])
         # self.headers = {'Content-Type': "application/json"}
@@ -86,6 +87,7 @@ class QROrderData(QROrder):
 
     def get_data(self, day: date) -> pd.DataFrame:
         result = None
+        retry = 0
         while result is None:
             try:
                 result = self.get_parts(day=day)
@@ -98,10 +100,12 @@ class QROrderData(QROrder):
                               f'[{self.server_data["server_name"]}] [{day}] '
                               f'[Fails with {self.parts} parts]')
                         result = pd.DataFrame([])
+                elif retry < self.retry_limit:
+                        retry +=1
                 else:
                     print(f'[Error] {error.args}')
                     result = pd.DataFrame([])
-                    break
+                    # break
         return result
 
     def select_df_colummns(self, df_input: pd.DataFrame) -> pd.DataFrame:
