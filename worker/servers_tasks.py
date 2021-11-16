@@ -4,11 +4,11 @@ from worker.worker import Worker
 class ServersTasks(Worker):
 
     def __init__(self, servers_groups: list, n_days: int, reload: bool,
-                 db, *args, **kwargs):
+                 db_conf: dict, *args, **kwargs):
         self.servers_groups = servers_groups
         self.n_days = n_days
         self.reload = reload
-        self.db = db
+        self.db_conf = db_conf
 
     def get_dates(self, server_name: str,
                   order_table_name: str):
@@ -33,6 +33,7 @@ class ServersTasks(Worker):
         return server
 
     def run(self):
+        self.db = self.db_conf['connection'](**self.db_conf['sql_server'])
         servers = [{'server': s,
                     'order_table_name': g['order_table_name']}
                    for g in self.servers_groups for s in g['qr_servers']]
