@@ -1,6 +1,7 @@
-from multiprocessing import JoinableQueue
+from queue import Queue
 
 import pandas as pd
+from loguru import logger
 
 from worker.worker import Worker
 
@@ -48,10 +49,17 @@ class OrderAggregate(Worker):
             df = pd.DataFrame([])
         return df
 
-    def run(self, queue_in: JoinableQueue, queue_out: JoinableQueue) -> None:
-        while True:
-            item = queue_in.get()
+    @logger.catch
+    def run(self, queue_in: Queue,
+            queue_out: Queue,
+            end_of_queue) -> None:
+
+        item = queue_in.get()
+        while item is not end_of_queue:
             item['df'] = self.proc_data(item['df'])
             if len(item['df']):
                 queue_out.put(item)
+                logger.debug('OrderAggregate put')
             queue_in.task_done()
+            item = queue_in.get()
+        return 0

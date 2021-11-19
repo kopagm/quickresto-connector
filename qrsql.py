@@ -1,4 +1,6 @@
-from datetime import date, timedelta, datetime
+from datetime import date, datetime, timedelta
+
+from loguru import logger
 
 from mssql import SQLConnection
 from quickresto import OrderDayReport
@@ -34,17 +36,19 @@ class QrSql():
                                    reload=reload)
             for day in dates:
                 log_str = (
-                    f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}]'
+                    # f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}]'
                     f'[{order_table_name}]'
                     f'[{server["server_name"]}][{day}]')
                 # print(log_str, end=' ')
-                print(log_str)
+                logger.info(log_str)
+                # sys.stdout.flush()
                 df = report.get_report(server_data=server, day=day)
                 if len(df):
                     self.db.update_df(table=order_table_name, df=df)
 
 
 def main():
+    logger.add('log_qrsql.log', rotation="5 MB")
     db = SQLConnection(**SQL_SERVER)
     qs = QrSql(db=db)
     for group in QR_SERVERS_GROUPS:

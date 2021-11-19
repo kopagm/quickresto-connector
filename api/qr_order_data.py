@@ -1,10 +1,12 @@
-from requests.models import Response
-from api.qr_order import QROrder
 from datetime import date, datetime, timedelta
+from json.decoder import JSONDecodeError
+
 import pandas as pd
 import requests
-from json.decoder import JSONDecodeError
-import sys
+from loguru import logger
+from requests.models import Response
+
+from api.qr_order import QROrder
 
 
 class QROrderData(QROrder):
@@ -64,10 +66,9 @@ class QROrderData(QROrder):
         return filter
 
     def get_parts(self, day: date) -> pd.DataFrame:
-        print(f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}] '
-              f'[{self.server_data["server_name"]}] [{day}] '
-              f'[try with {self.parts} parts...]')
-        sys.stdout.flush()
+        logger.info(  # f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}] '
+            f'[Server: {self.server_data["server_name"]}, Day: {day}] '
+            f'Try with {self.parts} parts...')
 
         df = pd.DataFrame([])
 
@@ -96,16 +97,17 @@ class QROrderData(QROrder):
                     if self.parts + self.parts_step <= self.parts_max:
                         self.parts += self.parts_step
                     else:
-                        print(f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}] '
-                              f'[{self.server_data["server_name"]}] [{day}] '
-                              f'[Fails with {self.parts} parts]')
+                        logger.warning(
+                            # f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}] '
+                            f'[Server: {self.server_data["server_name"]}, '
+                            f'Day: {day}] '
+                            f'Fails with {self.parts} parts')
                         result = pd.DataFrame([])
                 elif retry < self.retry_limit:
-                        retry +=1
+                    retry += 1
                 else:
-                    print(f'[Error] {error.args}')
+                    logger.exception("What?!")
                     result = pd.DataFrame([])
-                    # break
         return result
 
     def select_df_colummns(self, df_input: pd.DataFrame) -> pd.DataFrame:
@@ -115,6 +117,7 @@ class QROrderData(QROrder):
             df = df[module_fields]
         return df
 
+    @logger.catch
     def get(self, day: date) -> pd.DataFrame:
         # print(f'QROrderData {day}')
         df = self.get_data(day)

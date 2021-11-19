@@ -3,13 +3,14 @@ from queue import Queue
 from api.qr_order_data import QROrderData
 
 from worker.worker import Worker
-
+from loguru import logger
 
 class Order(Worker):
 
     def __init__(self, servers_groups: list, *args, **kwargs):
         self.servers_groups = servers_groups
 
+    @logger.catch
     def run(self, task: dict, queue: Queue):
         server_data = task['server']
         order_table_name = task['order_table_name']
@@ -21,3 +22,5 @@ class Order(Worker):
                 day_data = {'order_table_name': order_table_name,
                             'df': df}
                 queue.put(day_data)
+        # logger.debug('Order ends')
+        return 0

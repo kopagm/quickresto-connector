@@ -1,52 +1,77 @@
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import JoinableQueue, Process
+import threading
+from queue import Queue
+from loguru import logger
 
 from orch.orch import Orch
+import sys
 
 
 class OrchTread(Orch):
 
     def run(self) -> list:
-        show_config = self.workers['show_config'].run
-        servers_tasks = self.workers['servers_tasks'].run
-        show_servers_tasks = self.workers['show_servers_tasks'].run
-        order = self.workers['order'].run
-        order_aggregate = self.workers['order_aggregate'].run
-        store = self.workers['store'].run
+        worker_show_config = self.workers['show_config'].run
+        worker_servers_tasks = self.workers['servers_tasks'].run
+        worker_show_servers_tasks = self.workers['show_servers_tasks'].run
+        worker_order = self.workers['order'].run
+        worker_order_aggregate = self.workers['order_aggregate'].run
+        worker_store = self.workers['store'].run
 
-        show_config()
-        servers_tasks = servers_tasks()
-        # print(f'orc server_tasks {servers_tasks}')
-        show_servers_tasks(servers_tasks)
+        worker_show_config()
+        servers_tasks = worker_servers_tasks()
+        worker_show_servers_tasks(servers_tasks)
 
-        queue_orders = JoinableQueue()
-        queue_agg_orders = JoinableQueue()
+        queue_orders = Queue()
+        queue_agg_orders = Queue()
+        END_OF_QUEUE = object()
 
-        # proc_aggregate = Process(target=order_aggregate, args=(queue_orders, queue_agg_orders))
-        proc_aggregate = Process(target=order_aggregate,
-                                 kwargs={'queue_in': queue_orders,
-                                         'queue_out': queue_agg_orders},
-                                 name='proc_aggregate')
-        proc_store = Process(target=store,
-                             kwargs={'queue_in': queue_agg_orders},
-                             name='proc_store')
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
 
-        proc_aggregate.start()
-        proc_store.start()
+            exctr_order_aggregate = executor.submit(
+                worker_order_aggregate,
+                queue_in=queue_orders,
+                queue_out=queue_agg_orders,
+                end_of_queue=END_OF_QUEUE)
+            exctr_store = executor.submit(worker_store,
+                                          queue_in=queue_agg_orders,
+                                          end_of_queue=END_OF_QUEUE)
 
-        try:
-            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                tasks = [executor.submit(order, task, queue_orders)
-                         for task in servers_tasks]
-                tasks = [task.result() for task in tasks]
-                # tasks = [task.result() for task in tasks]
-        except Exception as ex:
-            # print('inst', type(inst), inst.__traceback__.tb_frame , inst)
-            raise ex
-        finally:
-            queue_orders.join()
-            # print('join')
-            proc_aggregate.terminate()
-            queue_agg_orders.join()
-            proc_store.terminate()
-        # print(f'exit')
+            exctrs_order = [executor.submit(worker_order, task, queue_orders)
+                            for task in servers_tasks]
+            results = [o.result() for o in exctrs_order]
+            logger.debug(f'Exctrs_order result: {results}')
+            logger.debug(f'active_count {threading.active_count()}')
+            queue_orders.put(END_OF_QUEUE)
+            result = exctr_order_aggregate.result()
+            logger.debug(f'Exctr_order_aggregate result: {result}')
+            queue_agg_orders.put(END_OF_QUEUE)
+            result = exctr_store.result()
+            logger.debug(f'Exctr_store result: {result}')
+
+            # logger.debug(f'results order_exs len {len(results)} {results}')
+        logger.debug(f'Active threads count {threading.active_count()}')
+
+            # finally
+        # logger.debug('OrchTread')
+            # queue_orders.join()
+            # logger.debug('join1')
+            # queue_orders.put(end_of_queue)
+            # proc_aggregate.terminate()
+            # logger.debug('terminate1')
+            # queue_agg_orders.join()
+            # logger.debug('join2')
+            # proc_store.terminate()
+            # logger.debug('terminate2')
+        # except BaseException as ex:
+        #     logger.exception('OrchTread')
+        #     raise ex
+        # finally:
+            # logger.debug('OrchTread finally')
+            # queue_orders.join()
+            # logger.debug('join1')
+            # proc_aggregate.terminate()
+            # queue_agg_orders.join()
+            # logger.debug('join2')
+            # proc_store.terminate()
+        # logger.debug(f'OrchTread exit')

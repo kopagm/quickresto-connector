@@ -1,3 +1,5 @@
+from loguru import logger
+
 from worker.worker import Worker
 
 
@@ -13,11 +15,12 @@ class ShowConfig(Worker):
         conf_str = []
         for group in self.servers_groups:
             for server in group['qr_servers']:
-                conf_str.append((f'[Group]: {group["order_table_name"]}, '
-                                 f'[Server]: {server["server_name"]}'))
+                conf_str.append((f'Group: {group["order_table_name"]}, '
+                                 f'Server: {server["server_name"]}'))
         conf_str = '\n'.join(conf_str)
-        log_str = (f'[Config]\n'
-                   f'[N_Days]: {self.n_days}\n'
-                   f'{conf_str}\n'
-                   f'{"-"*40}')
-        print(log_str)
+        log_str = (f'Config\n'
+                   f'N_Days: {self.n_days}, reload: {self.reload}\n'
+                   f'{conf_str}'
+                #    f'{"-"*40}'
+                   )
+        logger.info(log_str)

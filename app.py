@@ -3,6 +3,7 @@ from datetime import date, datetime
 import pandas as pd
 
 from app_config import db, orch
+from loguru import logger
 
 
 class App():
@@ -14,10 +15,14 @@ class App():
         # db.delete()
         top = self.orch.run()
 
-
-if __name__ == '__main__':
+@logger.catch
+def main():
+    logger.info(f'{"-"*5} Start {"-"*10}')
     app = App(orch=orch, db=db)
     start_time = datetime.now()
     app.fetch()
     time_delta = datetime.now() - start_time
-    print(f'{"-"*40}\nTotal minutes: {time_delta.total_seconds()/60.:.2f}')
+    logger.info(f'{"-"*5} End {"-"*12}\nTotal minutes: {time_delta.total_seconds()/60.:.2f}')
+
+if __name__ == '__main__':
+    main()

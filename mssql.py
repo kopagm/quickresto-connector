@@ -1,8 +1,10 @@
 from typing import Tuple
-import pyodbc
-import pandas as pd
 
-from setup import SQL_SERVER
+import pandas as pd
+import pyodbc
+from loguru import logger
+
+# from setup import SQL_SERVER
 
 
 class SQLConnection():
@@ -16,24 +18,38 @@ class SQLConnection():
         self.password = password
 
         self.key_fields = ['Place', 'Date', 'ServerName']
-
         self.cnxn = self.get_connection()
+        # logger.debug(f'SQLConnection, {hasattr(self, "cnxn")}')
+        logger.debug(f'SQLConnection, {self.cnxn}')
 
     def get_connection(self):
-        cnxn = pyodbc.connect(
-            server=self.server,
-            database=self.database,
-            user=self.username,
-            # tds_version='7.4',
-            password=self.password,
-            port=1433,
-            driver=self.driver)
+        try:
+            cnxn = pyodbc.connect(
+                server=self.server,
+                database=self.database,
+                user=self.username,
+                # tds_version='7.4',
+                password=self.password,
+                port=1433,
+                driver=self.driver)
+        except Exception as ex:
+            # logger.exception('pyodbc.connect')
+            raise ex
         return cnxn
 
+    def table_exist(self, table: str) -> bool:
+        cursor = self.cnxn.cursor()
+        id = cursor.execute(f"select OBJECT_ID('{table}', 'U')").fetchall()
+        logger.debug(f'id {id}')
+        cursor.close()
+        return id
+
     def get_dates(self, table: str, col: str = 'Date') -> list:
+        logger.debug(f'get_dates')
+        self.table_exist(table)
         cursor = self.cnxn.cursor()
         rows = cursor.execute(f"select {col} from {table}").fetchall()
-        # print(rows)
+        # logger.debug(rows)
         cursor.close()
         rows = list(map(lambda x: x[0], rows))
         return rows
@@ -42,7 +58,7 @@ class SQLConnection():
         cursor = self.cnxn.cursor()
         qs = f"select Date from {table} WHERE ServerName = '{server_name}'"
         rows = cursor.execute(qs).fetchall()
-        # print(rows)
+        # logger.debug(rows)
         cursor.close()
         rows = list(map(lambda x: x[0], rows))
         return rows
@@ -116,11 +132,11 @@ class SQLConnection():
             # insert if not update
             if count == 0:
                 qs, values = self.get_querydata_insert(table, row)
-                cursor.execute(qs, values)
-
+                count = cursor.execute(qs, values).rowcount
         cursor.commit()
         cursor.close()
-
+        return count
+    
     def delete_all_rows(self, table: str):
         '''Delete rows from table'''
 
@@ -146,7 +162,7 @@ class SQLConnection():
         #                 AND {col2} = ?'''
         qs = f'''DELETE FROM {table}
                     WHERE {col1} = ? AND {col2} = ?'''
-        # print(qs)
+        # logger.debug(qs)
         values = (eq_col1, eq_col2)
         # "delete from users where user_id=1"
         cursor.execute(qs, values)
@@ -156,11 +172,12 @@ class SQLConnection():
 
 
 if __name__ == '__main__':
-    cnxn = SQLConnection(**SQL_SERVER)
+    pass
+    # cnxn = SQLConnection(**SQL_SERVER)
     # df = pd.read_excel("out.xlsx", sheet_name='1')
     # cnxn.incert_df(df)
     # cnxn.drop_table()
     # cnxn.create_table()
     # cnxn.update_df(df)
     # cnxn.delete_rows(table='order_xxx', eq_col1='2021-10-16', eq_col2='ng398')
-    # print(cnxn.get_dates())
+    # logger.debug(cnxn.get_dates())

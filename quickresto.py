@@ -4,6 +4,7 @@ from typing import Tuple
 
 import pandas as pd
 import requests
+from loguru import logger
 
 # from setup import QR_SERVERS
 
@@ -53,7 +54,7 @@ class QRData():
 
 class QROrderDayData(QRData):
 
-    parts = 10
+    parts = 30
 
     def __init__(self, day: date, **kwargs):
         super().__init__(**kwargs)
@@ -82,9 +83,9 @@ class QROrderDayData(QRData):
             end_line = ''
         res_txt = response.text.replace('\n', '')[:display_len]
         log_str = (
-            f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}]'
+            # f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}]'
             f' {response.status_code} {res_txt}{end_line}')
-        print(log_str)
+        logger.debug(log_str)
 
     def proc_response(self, response: requests.Response) -> pd.DataFrame:
         self.log_response(response)
@@ -95,8 +96,8 @@ class QROrderDayData(QRData):
     def get_parts_data(self, response,
                        since: int, till: int, parts: int) -> pd.DataFrame:
         self.log_response(response)
-        print(f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}]'
-              f'[retry with {parts} parts...]')
+        logger.info(  # f'[{datetime.now().strftime("%m.%d.%Y %H:%M:%S")}]'
+            f'[retry with {parts} parts...]')
 
         df = pd.DataFrame([])
         try:
@@ -113,7 +114,7 @@ class QROrderDayData(QRData):
                 df = df.append(df_part, ignore_index=True)
                 p_since, p_till = p_till + 1, p_till + step
         except JSONDecodeError:
-            print('[JSONDecodeError]')
+            logger.exception('JSONDecodeError')
             df = pd.DataFrame([])
         return df
 
@@ -135,7 +136,7 @@ class QROrderDayData(QRData):
             try:
                 df = self.proc_response(response)
             except JSONDecodeError:
-                print('[JSONDecodeError]')
+                logger.exception('JSONDecodeError')
                 df = pd.DataFrame([])
 
         # drop columns
@@ -172,7 +173,7 @@ class OrderDayReport():
         writer = pd.ExcelWriter(path)
         df.to_excel(writer, index=False, sheet_name='1')
         writer.save()
-        print('=>', path)
+        logger.info('=>', path)
 
     def fiscal_sum(self, payments_list: list) -> float:
         """Sum of order fiscal operations"""
@@ -234,4 +235,4 @@ if __name__ == '__main__':
     # report = OrderDayReport()
     # df_front_orders = report.get_report(server_data=QR_SERVERS[0],
     #                                     day=date(*one_day_date))
-    # print(df_front_orders)
+    # logger.info(df_front_orders)
