@@ -136,7 +136,7 @@ class SQLConnection():
             counter += count
         cursor.commit()
         cursor.close()
-        return count
+        return counter
     
     def delete_all_rows(self, table: str):
         '''Delete rows from table'''
