@@ -20,7 +20,7 @@ class SQLConnection():
         self.key_fields = ['Place', 'Date', 'ServerName']
         self.cnxn = self.get_connection()
         # logger.debug(f'SQLConnection, {hasattr(self, "cnxn")}')
-        logger.debug(f'SQLConnection, {self.cnxn}')
+        # logger.debug(f'SQLConnection, {self.cnxn}')
 
     def get_connection(self):
         try:
