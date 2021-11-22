@@ -1,11 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import JoinableQueue, Process
 import threading
 from queue import Queue
 from loguru import logger
 
 from orch.orch import Orch
-import sys
 
 
 class OrchTread(Orch):
@@ -33,45 +31,24 @@ class OrchTread(Orch):
                 queue_in=queue_orders,
                 queue_out=queue_agg_orders,
                 end_of_queue=END_OF_QUEUE)
+            
             exctr_store = executor.submit(worker_store,
                                           queue_in=queue_agg_orders,
                                           end_of_queue=END_OF_QUEUE)
 
             exctrs_order = [executor.submit(worker_order, task, queue_orders)
                             for task in servers_tasks]
+            
             results = [o.result() for o in exctrs_order]
-            logger.debug(f'Exctrs_order result: {results}')
+            logger.debug(f'worker_order result: {results}')
             logger.debug(f'active_count {threading.active_count()}')
             queue_orders.put(END_OF_QUEUE)
             result = exctr_order_aggregate.result()
-            logger.debug(f'Exctr_order_aggregate result: {result}')
+            logger.debug(f'worker_order_aggregate result: {result}')
             queue_agg_orders.put(END_OF_QUEUE)
             result = exctr_store.result()
-            logger.debug(f'Exctr_store result: {result}')
-
+            logger.debug(f'worker_store result: {result}')
             # logger.debug(f'results order_exs len {len(results)} {results}')
         logger.debug(f'Active threads count {threading.active_count()}')
 
-            # finally
-        # logger.debug('OrchTread')
-            # queue_orders.join()
-            # logger.debug('join1')
-            # queue_orders.put(end_of_queue)
-            # proc_aggregate.terminate()
-            # logger.debug('terminate1')
-            # queue_agg_orders.join()
-            # logger.debug('join2')
-            # proc_store.terminate()
-            # logger.debug('terminate2')
-        # except BaseException as ex:
-        #     logger.exception('OrchTread')
-        #     raise ex
-        # finally:
-            # logger.debug('OrchTread finally')
-            # queue_orders.join()
-            # logger.debug('join1')
-            # proc_aggregate.terminate()
-            # queue_agg_orders.join()
-            # logger.debug('join2')
-            # proc_store.terminate()
         # logger.debug(f'OrchTread exit')
