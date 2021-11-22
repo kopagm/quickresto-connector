@@ -1,1 +1,1 @@
-venv\Scripts\activate & python curl_string.py > log_curl.txt
+.venv\Scripts\activate & python curl_string.py > log_curl.txt
