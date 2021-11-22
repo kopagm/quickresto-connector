@@ -59,7 +59,7 @@ class OrderAggregate(Worker):
             item['df'] = self.proc_data(item['df'])
             if len(item['df']):
                 queue_out.put(item)
-                logger.debug('OrderAggregate put')
+                # logger.debug('OrderAggregate put')
             queue_in.task_done()
             item = queue_in.get()
         return 0
