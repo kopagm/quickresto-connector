@@ -1,8 +1,8 @@
 from loguru import logger
 
 from mssql import SQLConnection
-from my_setup import N_DAYS, QR_SERVERS_GROUPS, SQL_SERVER
 from orch.orch_tread import OrchTread
+from setup import N_DAYS, QR_SERVERS_GROUPS, RELOAD, SQL_SERVER
 from worker.order import Order
 from worker.order_aggregate import OrderAggregate
 from worker.order_store import OrderStore
@@ -10,10 +10,11 @@ from worker.servers_tasks import ServersTasks
 from worker.show_config import ShowConfig
 from worker.show_servers_tasks import ShowServersTasks
 
-logger.add('log_app.log', rotation='0.2 MB', retention=1 , enqueue=True)
+logger.add('log_app.log', rotation='0.2 MB',
+           retention=1, enqueue=True, diagnose=True)
 
-# n_days = N_DAYS
-n_days = 5
+n_days = N_DAYS
+# n_days = 5
 
 db_conf = {"connection": SQLConnection,
            "sql_server": SQL_SERVER}
@@ -22,10 +23,9 @@ db = SQLConnection(**SQL_SERVER)
 
 config = {'servers_groups': QR_SERVERS_GROUPS,
           'n_days': n_days,
-        #   'reload': False,
-          'reload': True,
+          'reload': RELOAD,
           'db': db,
-        #   'db_conf': db_conf
+          #   'db_conf': db_conf
           }
 
 max_workers = 10

@@ -14,9 +14,12 @@ QR_SERVERS_GROUPS = [
 SQL_SERVER = {
     'server': 'localhost',
     'database': 'qr',
-    'driver': 'FreeTDS',
-    # 'driver': 'ODBC Driver 17 for SQL Server',
+    # 'driver': 'FreeTDS',
+    'driver': 'ODBC Driver 17 for SQL Server',
     'username': '',
     'password': ''}
 
 N_DAYS = 4
+
+RELOAD = False
+# RELOAD = True
