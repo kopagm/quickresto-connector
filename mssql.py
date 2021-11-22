@@ -22,6 +22,7 @@ class SQLConnection():
         # logger.debug(f'SQLConnection, {hasattr(self, "cnxn")}')
         # logger.debug(f'SQLConnection, {self.cnxn}')
 
+    # @logger.catch
     def get_connection(self):
         try:
             cnxn = pyodbc.connect(
@@ -33,7 +34,7 @@ class SQLConnection():
                 port=1433,
                 driver=self.driver)
         except Exception as ex:
-            # logger.exception('pyodbc.connect')
+            logger.exception('pyodbc.connect error')
             raise ex
         return cnxn
 
