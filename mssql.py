@@ -124,7 +124,7 @@ class SQLConnection():
         '''Update table from DataFrame'''
 
         cursor = self.cnxn.cursor()
-
+        counter = 0
         for index, row in df.iterrows():
             # update
             qs, values = self.get_querydata_update(table, row)
@@ -133,6 +133,7 @@ class SQLConnection():
             if count == 0:
                 qs, values = self.get_querydata_insert(table, row)
                 count = cursor.execute(qs, values).rowcount
+            counter += count
         cursor.commit()
         cursor.close()
         return count
