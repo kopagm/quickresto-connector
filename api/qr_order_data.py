@@ -108,6 +108,10 @@ class QROrderData(QROrder):
                 else:
                     logger.exception("What?!")
                     result = pd.DataFrame([])
+        logger.info(
+            f'[Server: {self.server_data["server_name"]}, Day: {day}] '
+            f'Loaded {len(result)} lines')
+
         return result
 
     def select_df_colummns(self, df_input: pd.DataFrame) -> pd.DataFrame:
