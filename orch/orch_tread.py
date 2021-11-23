@@ -41,7 +41,7 @@ class OrchTread(Orch):
             
             results = [o.result() for o in exctrs_order]
             logger.debug(f'worker_order result: {results}')
-            logger.debug(f'active_count {threading.active_count()}')
+            logger.debug(f'Active threads count {threading.active_count()}')
             queue_orders.put(END_OF_QUEUE)
             result = exctr_order_aggregate.result()
             logger.debug(f'worker_order_aggregate result: {result}')
